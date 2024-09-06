@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Package2Icon, BellIcon } from 'lucide-react'
+import Image from 'next/image'
 
 export function Navbar() {
   return (
@@ -29,7 +30,7 @@ export function Navbar() {
             <div className="ml-3 relative">
               <div>
                 <Button variant="ghost" size="icon" className="rounded-full border w-8 h-8">
-                  <img src="/placeholder.svg" width="32" height="32" className="rounded-full" alt="User avatar" />
+                  <Image src="/placeholder.svg" width="32" height="32" className="rounded-full" alt="User avatar" />
                   <span className="sr-only">Open user menu</span>
                 </Button>
               </div>

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { PlusCircle, MinusCircle, CreditCard, DollarSign, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { PlusCircle, MinusCircle, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
