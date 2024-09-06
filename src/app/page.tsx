@@ -109,7 +109,14 @@ export default function Component() {
   )
 }
 
-function Card({ title, amount, icon, className = '' }) {
+interface CardProps {
+  title: string;
+  amount: number;
+  icon: React.ReactNode;
+  className?: string;
+}
+
+function Card({ title, amount, icon, className = '' }: CardProps) {
   return (
     <div className={`bg-white rounded-lg shadow p-6 ${className}`}>
       <div className="flex items-center justify-between mb-4">
