@@ -1,11 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { PlusCircle, MinusCircle, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { usePlaidLink } from 'react-plaid-link'
 
 type Account = {
   id: string
@@ -46,6 +47,31 @@ export default function AccountsPage() {
   const [newAccountName, setNewAccountName] = useState('')
   const [newAccountBalance, setNewAccountBalance] = useState('')
   const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [linkToken, setLinkToken] = useState(null)
+
+  const generateToken = useCallback(async () => {
+    const response = await fetch('/api/create_link_token', { method: 'POST' })
+    const { link_token } = await response.json()
+    setLinkToken(link_token)
+  }, [])
+
+  useEffect(() => {
+    generateToken()
+  }, [generateToken])
+
+  const onSuccess = useCallback(async (public_token: string) => {
+    await fetch('/api/plaid/exchange_public_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ public_token }),
+    })
+    // TODO: Handle success (e.g., refresh accounts list)
+  }, [])
+
+  const { open, ready } = usePlaidLink({
+    token: linkToken,
+    onSuccess,
+  })
 
   const addAccount = () => {
     if (newAccountName && newAccountBalance) {
@@ -125,6 +151,15 @@ export default function AccountsPage() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              <Button 
+                onClick={() => open()} 
+                disabled={!ready}
+                variant="outline" 
+                className="mr-2"
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Link Bank Account
+              </Button>
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline">
