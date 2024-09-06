@@ -92,7 +92,7 @@ export default function AccountsPage() {
                   <DialogHeader>
                     <DialogTitle>Add New Account</DialogTitle>
                     <DialogDescription>
-                      Enter the details of the new account you'd like to add.
+                      Enter the details of the new account you&apos;d like to add.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -136,7 +136,7 @@ export default function AccountsPage() {
                   <DialogHeader>
                     <DialogTitle>Remove Account</DialogTitle>
                     <DialogDescription>
-                      Select the account you'd like to remove.
+                      Select the account you&apos;d like to remove.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
