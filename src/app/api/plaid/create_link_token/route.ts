@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { Configuration, PlaidApi, PlaidEnvironments, Products } from 'plaid'
+import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from 'plaid'
 
 const configuration = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       user: { client_user_id: userId },
       client_name: 'Finance App',
       products: [Products.Transactions],
-      country_codes: ['IT'],
+      country_codes: [CountryCode.It],
       language: 'en',
     })
 
