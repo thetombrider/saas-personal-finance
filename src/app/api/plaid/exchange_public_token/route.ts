@@ -16,12 +16,8 @@ const configuration = new Configuration({
 
 const plaidClient = new PlaidApi(configuration);
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  const { public_token } = req.body;
+export async function POST(req: Request) {
+  const { public_token } = await req.json();
 
   try {
     const exchangeResponse = await plaidClient.itemPublicTokenExchange({
@@ -34,9 +30,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // TODO: Store accessToken and itemId securely in your database
     // associated with the current user
 
-    res.status(200).json({ message: 'Access token obtained successfully' });
+    // Print access token to console
+    console.log('Access Token:', accessToken);
+
+    return new Response(JSON.stringify({ message: 'Access token obtained successfully', accessToken }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error exchanging public token:', error);
-    res.status(500).json({ message: 'Error exchanging token' });
+    toast.error('Error exchanging token');
+    return new Response(JSON.stringify({ message: 'Error exchanging token' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

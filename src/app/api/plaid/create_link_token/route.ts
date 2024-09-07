@@ -13,23 +13,25 @@ const configuration = new Configuration({
 
 const plaidClient = new PlaidApi(configuration);
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
+export async function POST(req: Request) {
   try {
     const createTokenResponse = await plaidClient.linkTokenCreate({
       user: { client_user_id: 'user-id' }, // Replace with actual user ID
-      client_name: 'Your App Name',
-      products: [Products.Transactions],
-      country_codes: [CountryCode.IT],
+      client_name: 'Finance App',
+      products: ["transactions"],
+      country_codes: ["IT"],
       language: 'en',
     });
 
-    res.status(200).json({ link_token: createTokenResponse.data.link_token });
+    return new Response(JSON.stringify({ link_token: createTokenResponse.data.link_token }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Error creating link token:', error);
-    res.status(500).json({ message: 'Error creating link token' });
+    return new Response(JSON.stringify({ message: 'Error creating link token' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
