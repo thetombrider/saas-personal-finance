@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { User } from '@supabase/supabase-js'
 
 export default function Profile() {
   const [username, setUsername] = useState('')
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     const fetchUser = async () => {
