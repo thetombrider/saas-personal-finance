@@ -3,16 +3,17 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { DollarSign, CreditCard, Wallet, ArrowDownCircle, ArrowUpCircle, PiggyBank, LayoutDashboard, CreditCard as CardIcon, Menu } from 'lucide-react'
+import { User } from '@supabase/supabase-js'
 
 export default function Dashboard() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
-        setUser(session.user)
+        setUser(session?.user ?? null)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
         router.push('/auth')
