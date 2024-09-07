@@ -18,8 +18,8 @@ export async function POST(req: Request) {
     const createTokenResponse = await plaidClient.linkTokenCreate({
       user: { client_user_id: 'user-id' }, // Replace with actual user ID
       client_name: 'Finance App',
-      products: ["transactions"],
-      country_codes: ["IT"],
+      products: ['transactions'],
+      country_codes: ['IT'],
       language: 'en',
     });
 
