@@ -19,9 +19,11 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.439.0",
     "next": "14.2.8",
+    "next-auth": "^4.24.7",
     "plaid": "^27.0.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-hot-toast": "^2.4.1",
     "react-plaid-link": "^3.6.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
