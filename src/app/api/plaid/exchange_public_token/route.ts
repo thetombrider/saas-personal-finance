@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
 import getConfig from 'next/config';
+import { toast } from 'react-hot-toast';
+
 
 const { publicRuntimeConfig } = getConfig();
 

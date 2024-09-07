@@ -1,9 +1,37 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import { DollarSign, CreditCard, Wallet, ArrowDownCircle, ArrowUpCircle, PiggyBank, LayoutDashboard, CreditCard as CardIcon, Menu } from 'lucide-react'
 
-export default function Component() {
+export default function Dashboard() {
+  const [user, setUser] = useState(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        setUser(session.user)
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null)
+        router.push('/auth')
+      }
+    })
+
+    // Check initial auth state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setUser(session.user)
+      } else {
+        router.push('/auth')
+      }
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [router])
 
   // Mock data for the dashboard
   const financialData = {
@@ -19,6 +47,8 @@ export default function Component() {
       { id: 5, description: 'Freelance Payment', amount: 1000, date: '2023-04-20' },
     ],
   }
+
+  if (!user) return <div>Loading...</div>
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -59,7 +89,7 @@ export default function Component() {
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
           <div className="max-w-7xl mx-auto px-4 py-2">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-semibold text-gray-800">Personal Finance Dashboard</h1>
+              <h1 className="text-2xl font-semibold text-gray-800">Welcome, {user.email}</h1>
               <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden">
                 <Menu className="h-6 w-6" />
               </button>
