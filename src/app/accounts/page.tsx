@@ -4,6 +4,7 @@ import { usePlaidLink } from 'react-plaid-link'
 import { Button } from "@/components/ui/button"
 import { PlusCircle, CreditCard } from "lucide-react"
 import { toast } from 'react-hot-toast'
+import { supabase } from '@/lib/supabaseClient'
 
 // Placeholder type for account data
 type Account = {
@@ -21,10 +22,23 @@ export default function AccountsPage() {
   const generateToken = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/plaid/create_link_token', { method: 'POST' })
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('User not authenticated')
+      }
+
+      const response = await fetch('/api/plaid/create_link_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      })
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
+
       const { link_token } = await response.json()
       setLinkToken(link_token)
     } catch (error) {
