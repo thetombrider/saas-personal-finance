@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid'
+import { Configuration, PlaidApi, PlaidEnvironments, Products } from 'plaid'
 
 const configuration = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const createTokenResponse = await plaidClient.linkTokenCreate({
       user: { client_user_id: userId },
       client_name: 'Finance App',
-      products: ['transactions' as const],
+      products: [Products.Transactions],
       country_codes: ['IT'],
       language: 'en',
     })
