@@ -26,6 +26,7 @@
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
     "react-plaid-link": "^3.6.0",
+    "react-toastify": "^10.0.5",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7"
   },
@@ -34,6 +35,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/react-toastify": "^4.0.2",
     "eslint": "^8",
     "eslint-config-next": "14.2.8",
     "postcss": "^8",
