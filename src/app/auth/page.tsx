@@ -4,39 +4,39 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import { Mail, Lock, LogIn, UserPlus } from 'lucide-react'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
   const [mode, setMode] = useState<'signIn' | 'signUp'>('signIn')
+  const [error, setError] = useState<string>('') // Add error state
   const router = useRouter()
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
+    setError('') // Clear error state
 
-    try {
-      if (mode === 'signUp') {
-        const { error } = await supabase.auth.signUp({ email, password })
-        if (error) throw error
-        alert('Check your email for the confirmation link!')
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
-        router.push('/')
-      }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An unknown error occurred')
-    } finally {
-      setIsLoading(false)
+    const { error } = mode === 'signIn'
+      ? await supabase.auth.signInWithPassword({ email, password })
+      : await supabase.auth.signUp({ email, password })
+
+    setIsLoading(false)
+
+    if (error) {
+      toast.error(error.message) // Show error toast
+    } else {
+      toast.success(`Successfully ${mode === 'signIn' ? 'signed in' : 'signed up'}!`) // Show success toast
+      router.push('/')
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <ToastContainer /> {/* Add ToastContainer for toasts */}
       <div className="max-w-md w-full space-y-8 bg-white rounded-lg shadow p-8">
         <div>
           <h2 className="text-2xl font-semibold text-gray-800 text-center">
@@ -84,8 +84,6 @@ export default function Auth() {
               </div>
             </div>
           </div>
-
-          {error && <div className="text-red-500 text-sm">{error}</div>}
 
           <div>
             <button
