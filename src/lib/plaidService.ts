@@ -37,25 +37,39 @@ export const createLinkToken = async (userId: string) => {
 
 // Function to exchange public token
 export const exchangePublicToken = async (publicToken: string, userId: string) => {
-  console.log('Exchanging public token:', publicToken);
-  const response = await plaidClient.itemPublicTokenExchange({
-    public_token: publicToken,
-  });
-  console.log('Public token exchanged:', response.data);
-  
-  // Save the access token to the database
-  await saveAccessToken(userId, response.data.access_token, response.data.item_id);
-  
-  return response;
+  console.log('Exchanging public token:', publicToken, 'for user:', userId);
+  try {
+    const response = await plaidClient.itemPublicTokenExchange({
+      public_token: publicToken,
+    });
+    console.log('Public token exchanged:', response.data);
+    
+    await saveAccessToken(userId, response.data.access_token, response.data.item_id);
+    
+    return response;
+  } catch (error) {
+    console.error('Error in exchangePublicToken:', error);
+    if (error instanceof Error && 'response' in error && typeof error.response === 'object' && error.response !== null) {
+      console.error('Plaid API error:', (error.response as { data: unknown }).data);
+    }
+    throw error;
+  }
 };
 
 const saveAccessToken = async (userId: string, accessToken: string, itemId: string) => {
-  const { error } = await supabase
-    .from('plaid_items')
-    .upsert({ user_id: userId, access_token: accessToken, item_id: itemId });
+  console.log('Saving access token for user:', userId);
+  try {
+    const { error } = await supabase
+      .from('plaid_items')
+      .upsert({ user_id: userId, access_token: accessToken, item_id: itemId });
 
-  if (error) {
-    console.error('Error saving access token:', error);
+    if (error) {
+      console.error('Error saving access token:', error);
+      throw error;
+    }
+    console.log('Access token saved successfully');
+  } catch (error) {
+    console.error('Error in saveAccessToken:', error);
     throw error;
   }
 };

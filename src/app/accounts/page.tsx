@@ -91,11 +91,14 @@ export default function AccountsPage() {
         toast.success('Account linked successfully');
         fetchAccountsData();
       } else {
+        console.error('Error response:', data);
         throw new Error(data.error || 'Failed to link account');
       }
     } catch (error) {
       console.error('Error exchanging public token:', error);
-      toast.error('Failed to link account. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error details:', errorMessage);
+      toast.error(`Failed to link account: ${errorMessage}`);
     }
   }, [fetchAccountsData]);
 
