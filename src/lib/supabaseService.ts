@@ -2,8 +2,9 @@ import { supabase } from '@/lib/supabaseClient'
 
 // Function to get user
 export const getUser = async () => {
-  console.log('Fetching user...');
+  console.log('getUser function called');
   const { data: { user }, error } = await supabase.auth.getUser();
+  console.log('Supabase auth response:', { user, error });
   if (error) {
     console.error('Error fetching user:', error.message);
     throw new Error('User not authenticated');
@@ -21,14 +22,14 @@ export const fetchAccounts = async () => {
       .select('*');
 
     if (error) {
-      console.error('Error fetching accounts:', error.message);
-      return [];
+      console.error('Error fetching accounts:', error.message, error.details, error.hint);
+      throw error;
     }
     console.log('Accounts fetched:', data);
     return data;
   } catch (error) {
     console.error('Unexpected error fetching accounts:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -62,3 +63,19 @@ export const fetchUserProfile = async (userId: string) => {
   console.log('User profile fetched:', data);
   return data;
 }
+
+export const fetchPlaidItems = async (userId: string) => {
+  console.log('Fetching Plaid items for user:', userId);
+  const { data, error } = await supabase
+    .from('plaid_items')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Error fetching Plaid items:', error.message);
+    throw error;
+  }
+
+  console.log('Plaid items fetched:', data);
+  return data;
+};

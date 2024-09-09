@@ -4,8 +4,9 @@ import { usePlaidLink } from 'react-plaid-link'
 import { Button } from "@/components/ui/button"
 import { PlusCircle, CreditCard } from "lucide-react"
 import { toast } from 'react-hot-toast'
-import { getUser, fetchAccounts } from '@/lib/supabaseService' // Ensure this is updated
-import { createLinkToken, exchangePublicToken } from '@/lib/plaidService' // Ensure this is updated
+import { getUser, fetchAccounts, fetchPlaidItems } from '@/lib/supabaseService'
+import { createLinkToken, exchangePublicToken } from '@/lib/plaidService'
+import { supabase } from '@/lib/supabaseClient'
 
 // Placeholder type for account data
 type Account = {
@@ -19,31 +20,49 @@ export default function AccountsPage() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [plaidItems, setPlaidItems] = useState<any[]>([])
 
   const generateToken = useCallback(async () => {
     setIsLoading(true);
     try {
-      const user = await getUser(); // Use the new service function
-      if (!user) throw new Error('User not found'); // Check if user is valid
-      const response = await createLinkToken(user.id); // Use the new service function
-      if (!response.data.link_token) throw new Error('Link token not generated'); // Check link token
-      setLinkToken(response.data.link_token); // Extract link_token from response
+      console.log('Fetching user...');
+      const user = await getUser();
+      console.log('User fetched:', user);
+      if (!user) throw new Error('User not found');
+      
+      console.log('Creating link token for user:', user.id);
+      const response = await fetch('/api/plaid/create_link_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await response.json();
+      console.log('Link token response:', data);
+      
+      if (!data.link_token) throw new Error('Link token not generated');
+      setLinkToken(data.link_token);
+      console.log('Link token set:', data.link_token);
     } catch (error) {
       console.error('Error generating link token:', error);
-      toast.error('Failed to initialize Plaid Link. Please try again.'); // Toast notification for error
+      toast.error('Failed to initialize Plaid Link. Please try again.');
     } finally {
       setIsLoading(false);
     }
   }, [])
 
-  const fetchAccountsData = useCallback(async () => { // Renamed function to avoid conflict
+  const fetchAccountsData = useCallback(async () => {
     try {
-      const accountsData = await fetchAccounts(); // Use the new service function
-      if (!Array.isArray(accountsData)) throw new Error('Invalid accounts data'); // Validate accounts data
-      setAccounts(accountsData); // Updated variable name
+      const user = await getUser();
+      if (!user) throw new Error('User not found');
+
+      const items = await fetchPlaidItems(user.id);
+      setPlaidItems(items);
+
+      const accountsData = await fetchAccounts();
+      setAccounts(accountsData);
     } catch (error) {
       console.error('Error fetching accounts data:', error);
-      toast.error('Failed to fetch accounts. Please try again.'); // Toast notification for error
+      toast.error('Failed to fetch accounts. Please try again.');
     }
   }, [])
 
@@ -52,21 +71,38 @@ export default function AccountsPage() {
     fetchAccountsData();
   }, [generateToken, fetchAccountsData]);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Current session:', session);
+    };
+    checkAuth();
+  }, []);
+
   const onSuccess = useCallback(async (public_token: string) => {
     try {
-      await exchangePublicToken(public_token); // Use the new service function
-      toast.success('Account linked successfully');
-      fetchAccountsData(); // Refresh the accounts list after linking
+      const response = await fetch('/api/plaid/exchange_public_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_token }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success('Account linked successfully');
+        fetchAccountsData();
+      } else {
+        throw new Error(data.error || 'Failed to link account');
+      }
     } catch (error) {
       console.error('Error exchanging public token:', error);
-      toast.error('Failed to link account. Please try again.'); // Toast notification for error
+      toast.error('Failed to link account. Please try again.');
     }
   }, [fetchAccountsData]);
 
   const onExit = useCallback((err: any) => {
     if (err != null) {
       console.error('Plaid Link error:', err);
-      toast.error('An error occurred while linking your account.'); // Toast notification for error
+      toast.error('An error occurred while linking your account.');
     }
     // Handle user exit
   }, [])
@@ -97,6 +133,12 @@ export default function AccountsPage() {
       </div>
       <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:px-6 py-5">
+          {plaidItems.map((item) => (
+            <div key={item.id} className="bg-white p-4 rounded-lg shadow">
+              <h2 className="text-lg font-semibold text-gray-900">Linked Institution</h2>
+              <p className="text-gray-600">Item ID: {item.item_id}</p>
+            </div>
+          ))}
           {accounts.map((account) => (
             <div key={account.id} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
@@ -108,7 +150,7 @@ export default function AccountsPage() {
             </div>
           ))}
         </div>
-        {accounts.length === 0 && (
+        {plaidItems.length === 0 && accounts.length === 0 && (
           <div className="text-center py-5 sm:px-6">
             <p className="text-gray-500">
               No accounts linked yet. Click "Link New Account" to get started.

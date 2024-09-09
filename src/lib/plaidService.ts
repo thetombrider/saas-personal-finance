@@ -1,4 +1,5 @@
 import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from 'plaid';
+import { supabase } from '@/lib/supabaseClient';
 
 const configuration = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
@@ -10,30 +11,53 @@ const configuration = new Configuration({
   },
 });
 
+// Remove any custom User-Agent setting
+delete configuration.baseOptions?.headers?.['User-Agent'];
+
 const plaidClient = new PlaidApi(configuration);
 
 // Function to create link token
 export const createLinkToken = async (userId: string) => {
   console.log(`Creating link token for user ID: ${userId}`);
-  const response = await plaidClient.linkTokenCreate({
-    user: { client_user_id: userId },
-    client_name: 'Finance App',
-    products: [Products.Transactions],
-    country_codes: [CountryCode.It],
-    language: 'en',
-  });
-  console.log('Link token created:', response.data.link_token);
-  return response;
+  try {
+    const response = await plaidClient.linkTokenCreate({
+      user: { client_user_id: userId },
+      client_name: 'Finance App',
+      products: [Products.Transactions],
+      country_codes: [CountryCode.It],
+      language: 'en',
+    });
+    console.log('Link token created:', response.data.link_token);
+    return response;
+  } catch (error) {
+    console.error('Error creating link token:', error);
+    throw error;
+  }
 };
 
 // Function to exchange public token
-export const exchangePublicToken = async (publicToken: string) => {
+export const exchangePublicToken = async (publicToken: string, userId: string) => {
   console.log('Exchanging public token:', publicToken);
   const response = await plaidClient.itemPublicTokenExchange({
     public_token: publicToken,
   });
   console.log('Public token exchanged:', response.data);
+  
+  // Save the access token to the database
+  await saveAccessToken(userId, response.data.access_token, response.data.item_id);
+  
   return response;
+};
+
+const saveAccessToken = async (userId: string, accessToken: string, itemId: string) => {
+  const { error } = await supabase
+    .from('plaid_items')
+    .upsert({ user_id: userId, access_token: accessToken, item_id: itemId });
+
+  if (error) {
+    console.error('Error saving access token:', error);
+    throw error;
+  }
 };
 
 // Function to fetch transactions
@@ -52,3 +76,7 @@ export const fetchTransactions = async (access_token: string) => {
     throw error; // Rethrow to handle it in the calling function
   }
 }
+
+console.log('Plaid Environment:', process.env.PLAID_ENV);
+console.log('Plaid Client ID:', process.env.PLAID_CLIENT_ID ? 'Set' : 'Not set');
+console.log('Plaid Secret:', process.env.PLAID_SECRET ? 'Set' : 'Not set');
