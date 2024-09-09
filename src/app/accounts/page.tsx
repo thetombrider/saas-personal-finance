@@ -4,7 +4,8 @@ import { usePlaidLink } from 'react-plaid-link'
 import { Button } from "@/components/ui/button"
 import { PlusCircle, CreditCard } from "lucide-react"
 import { toast } from 'react-hot-toast'
-import { supabase } from '@/lib/supabaseClient'
+import { getUser, fetchAccounts } from '@/lib/supabaseService' // Ensure this is updated
+import { createLinkToken, exchangePublicToken } from '@/lib/plaidService' // Ensure this is updated
 
 // Placeholder type for account data
 type Account = {
@@ -22,25 +23,9 @@ export default function AccountsPage() {
   const generateToken = useCallback(async () => {
     setIsLoading(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('User not authenticated')
-      }
-
-      const response = await fetch('/api/plaid/create_link_token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const { link_token } = await response.json()
-      setLinkToken(link_token)
+      const user = await getUser() // Use the new service function
+      const response = await createLinkToken(user.id) // Use the new service function
+      setLinkToken(response.data.link_token) // Extract link_token from response
     } catch (error) {
       console.error('Error generating link token:', error)
       toast.error('Failed to initialize Plaid Link. Please try again.')
@@ -49,36 +34,26 @@ export default function AccountsPage() {
     }
   }, [])
 
-  const fetchAccounts = useCallback(async () => {
-    // TODO: Implement actual API call to fetch accounts
-    setAccounts([
-      { id: '1', name: 'Checking Account', balance: 1000, type: 'checking' },
-      { id: '2', name: 'Savings Account', balance: 5000, type: 'savings' },
-    ])
+  const fetchAccountsData = useCallback(async () => { // Renamed function to avoid conflict
+    const accountsData = await fetchAccounts() // Use the new service function
+    setAccounts(accountsData) // Updated variable name
   }, [])
 
   useEffect(() => {
     generateToken()
-    fetchAccounts()
-  }, [generateToken, fetchAccounts])
+    fetchAccountsData()
+  }, [generateToken, fetchAccountsData])
 
-  const onSuccess = useCallback(async (public_token: string, metadata: any) => {
+  const onSuccess = useCallback(async (public_token: string) => {
     try {
-      const response = await fetch('/api/plaid/exchange_public_token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_token }),
-      })
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      await exchangePublicToken(public_token) // Use the new service function
       toast.success('Account linked successfully')
-      fetchAccounts() // Refresh the accounts list after linking
+      fetchAccountsData() // Refresh the accounts list after linking
     } catch (error) {
       console.error('Error exchanging public token:', error)
       toast.error('Failed to link account. Please try again.')
     }
-  }, [fetchAccounts])
+  }, [fetchAccountsData])
 
   const onExit = useCallback((err: any) => {
     if (err != null) {

@@ -64,12 +64,6 @@ export default function Dashboard() {
         <nav className="flex-1 p-4">
           <ul className="space-y-2">
             <li>
-              <a href="/" className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 rounded-md p-2">
-                <LayoutDashboard className="h-5 w-5" />
-                <span>Dashboard</span>
-              </a>
-            </li>
-            <li>
               <a href="/accounts" className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 rounded-md p-2">
                 <CardIcon className="h-5 w-5" />
                 <span>Accounts</span>
@@ -79,6 +73,12 @@ export default function Dashboard() {
               <a href="/transactions" className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 rounded-md p-2">
                 <CreditCard className="h-5 w-5" />
                 <span>Transactions</span>
+              </a>
+            </li>
+            <li>
+              <a href="/profile" className="flex items-center space-x-2 text-gray-700 hover:bg-gray-100 rounded-md p-2">
+                <CreditCard className="h-5 w-5" />
+                <span>Profile</span>
               </a>
             </li>
           </ul>

@@ -1,17 +1,5 @@
 import { NextResponse } from 'next/server'
-import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from 'plaid'
-
-const configuration = new Configuration({
-  basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
-      'PLAID-SECRET': process.env.PLAID_SECRET,
-    },
-  },
-})
-
-const plaidClient = new PlaidApi(configuration)
+import { createLinkToken } from '@/lib/plaidService'
 
 export async function POST(req: Request) {
   try {
@@ -21,14 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    const createTokenResponse = await plaidClient.linkTokenCreate({
-      user: { client_user_id: userId },
-      client_name: 'Finance App',
-      products: [Products.Transactions],
-      country_codes: [CountryCode.It],
-      language: 'en',
-    })
-
+    const createTokenResponse = await createLinkToken(userId)
     return NextResponse.json(createTokenResponse.data)
   } catch (error) {
     console.error('Error creating link token:', error)

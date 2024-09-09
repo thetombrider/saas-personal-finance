@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowUpCircle, ArrowDownCircle, Search } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Configuration, PlaidApi } from 'plaid' // Update import
 
 type Transaction = {
   id: string
@@ -56,6 +57,38 @@ export default function TransactionsPage() {
         : [...prev, accountId]
     )
   }
+
+  const plaidClient = new PlaidApi(new Configuration({ // Initialize Plaid client
+    basePath: process.env.PLAID_ENV, // Adjust as needed
+    baseOptions: {
+      headers: {
+        'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
+        'PLAID-SECRET': process.env.PLAID_SECRET,
+      },
+    },
+  }))
+
+  const fetchTransactions = async () => { // New function to fetch transactions
+    try {
+      const response = await plaidClient.transactionsGet({
+        access_token: 'your_access_token', // Replace with your access token
+        start_date: '2023-01-01', // Adjust as needed
+        end_date: '2023-12-31', // Adjust as needed
+      })
+      return response.data.transactions // Return fetched transactions
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+      return [] // Return empty array on error
+    }
+  }
+
+  useEffect(() => { // Fetch transactions on component mount
+    const getTransactions = async () => {
+      const fetchedTransactions = await fetchTransactions()
+      // Update your state with fetched transactions here
+    }
+    getTransactions()
+  }, [])
 
   return (
     <div className="container mx-auto px-4 py-8">
