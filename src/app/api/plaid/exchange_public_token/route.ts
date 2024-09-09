@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error exchanging public token:', error);
-    return new Response(JSON.stringify({ message: 'Error exchanging token' }), {
+    return new Response(JSON.stringify({ error: 'Failed to exchange token' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

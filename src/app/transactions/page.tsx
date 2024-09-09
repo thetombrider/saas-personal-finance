@@ -84,8 +84,12 @@ export default function TransactionsPage() {
 
   useEffect(() => { // Fetch transactions on component mount
     const getTransactions = async () => {
-      const fetchedTransactions = await fetchTransactions()
-      // Update your state with fetched transactions here
+      try {
+        const fetchedTransactions = await fetchTransactions()
+        // Update your state with fetched transactions here
+      } catch (error) {
+        console.error('Error in getTransactions:', error)
+      }
     }
     getTransactions()
   }, [])

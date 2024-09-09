@@ -4,6 +4,9 @@ import { getUser, fetchUserProfile, updateUserProfile } from '@/lib/supabaseServ
 export async function GET(req: Request) {
   try {
     const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     const profile = await fetchUserProfile(user.id);
     return NextResponse.json(profile);
   } catch (error) {
@@ -16,6 +19,9 @@ export async function POST(req: Request) {
   try {
     const { username } = await req.json();
     const user = await getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
     await updateUserProfile(user.id, username);
     return NextResponse.json({ message: 'Profile updated successfully' });
   } catch (error) {

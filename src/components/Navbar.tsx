@@ -29,8 +29,12 @@ export function Navbar() {
   }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth')
+    try {
+      await supabase.auth.signOut();
+      router.push('/auth');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   }
 
   return (

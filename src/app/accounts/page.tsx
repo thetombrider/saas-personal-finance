@@ -21,44 +21,52 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
 
   const generateToken = useCallback(async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const user = await getUser() // Use the new service function
-      const response = await createLinkToken(user.id) // Use the new service function
-      setLinkToken(response.data.link_token) // Extract link_token from response
+      const user = await getUser(); // Use the new service function
+      if (!user) throw new Error('User not found'); // Check if user is valid
+      const response = await createLinkToken(user.id); // Use the new service function
+      if (!response.data.link_token) throw new Error('Link token not generated'); // Check link token
+      setLinkToken(response.data.link_token); // Extract link_token from response
     } catch (error) {
-      console.error('Error generating link token:', error)
-      toast.error('Failed to initialize Plaid Link. Please try again.')
+      console.error('Error generating link token:', error);
+      toast.error('Failed to initialize Plaid Link. Please try again.'); // Toast notification for error
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }, [])
 
   const fetchAccountsData = useCallback(async () => { // Renamed function to avoid conflict
-    const accountsData = await fetchAccounts() // Use the new service function
-    setAccounts(accountsData) // Updated variable name
+    try {
+      const accountsData = await fetchAccounts(); // Use the new service function
+      if (!Array.isArray(accountsData)) throw new Error('Invalid accounts data'); // Validate accounts data
+      setAccounts(accountsData); // Updated variable name
+    } catch (error) {
+      console.error('Error fetching accounts data:', error);
+      toast.error('Failed to fetch accounts. Please try again.'); // Toast notification for error
+    }
   }, [])
 
   useEffect(() => {
-    generateToken()
-    fetchAccountsData()
-  }, [generateToken, fetchAccountsData])
+    generateToken();
+    fetchAccountsData();
+  }, [generateToken, fetchAccountsData]);
 
   const onSuccess = useCallback(async (public_token: string) => {
     try {
-      await exchangePublicToken(public_token) // Use the new service function
-      toast.success('Account linked successfully')
-      fetchAccountsData() // Refresh the accounts list after linking
+      await exchangePublicToken(public_token); // Use the new service function
+      toast.success('Account linked successfully');
+      fetchAccountsData(); // Refresh the accounts list after linking
     } catch (error) {
-      console.error('Error exchanging public token:', error)
-      toast.error('Failed to link account. Please try again.')
+      console.error('Error exchanging public token:', error);
+      toast.error('Failed to link account. Please try again.'); // Toast notification for error
     }
-  }, [fetchAccountsData])
+  }, [fetchAccountsData]);
 
   const onExit = useCallback((err: any) => {
     if (err != null) {
-      console.error('Plaid Link error:', err)
-      toast.error('An error occurred while linking your account.')
+      console.error('Plaid Link error:', err);
+      toast.error('An error occurred while linking your account.'); // Toast notification for error
     }
     // Handle user exit
   }, [])
