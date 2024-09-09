@@ -81,10 +81,15 @@ export default function AccountsPage() {
 
   const onSuccess = useCallback(async (public_token: string) => {
     try {
+      const user = await getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const response = await fetch('/api/plaid/exchange_public_token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_token }),
+        body: JSON.stringify({ public_token, userId: user.id }),
       });
       const data = await response.json();
       if (response.ok) {
