@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast'
 import { getUser, fetchAccounts } from '@/lib/supabaseService'
 import { createLinkToken, exchangePublicToken } from '@/lib/plaidService'
 import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
 
 // Placeholder type for account data
 type Account = {
@@ -25,12 +26,17 @@ export default function AccountsPage() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
+  const router = useRouter()
 
   const generateToken = useCallback(async () => {
     setIsLoading(true);
     try {
       const user = await getUser();
-      if (!user) throw new Error('User not found');
+      if (!user) {
+        toast.error('Please log in to link your account.');
+        router.push('/auth');
+        return;
+      }
       
       console.log('Fetching link token for user:', user.id);
       const response = await fetch('/api/plaid/create_link_token', {
@@ -56,7 +62,7 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [])
+  }, [router])
 
   const fetchAccountsData = useCallback(async () => {
     try {
