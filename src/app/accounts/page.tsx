@@ -10,38 +10,37 @@ import { supabase } from '@/lib/supabaseClient'
 
 // Placeholder type for account data
 type Account = {
-  id: string;
+  account_id: string;
   name: string;
-  balance: number;
+  balances: {
+    current: number;
+    available: number;
+  };
   type: string;
+  subtype: string;
+  mask: string;
 };
 
 export default function AccountsPage() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
-  const [plaidItems, setPlaidItems] = useState<any[]>([])
 
   const generateToken = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log('Fetching user...');
       const user = await getUser();
-      console.log('User fetched:', user);
       if (!user) throw new Error('User not found');
       
-      console.log('Creating link token for user:', user.id);
       const response = await fetch('/api/plaid/create_link_token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id }),
       });
       const data = await response.json();
-      console.log('Link token response:', data);
       
       if (!data.link_token) throw new Error('Link token not generated');
       setLinkToken(data.link_token);
-      console.log('Link token set:', data.link_token);
     } catch (error) {
       console.error('Error generating link token:', error);
       toast.error('Failed to initialize Plaid Link. Please try again.');
@@ -55,11 +54,17 @@ export default function AccountsPage() {
       const user = await getUser();
       if (!user) throw new Error('User not found');
 
-      const items = await fetchPlaidItems(user.id);
-      setPlaidItems(items);
-
-      const accountsData = await fetchAccounts();
-      setAccounts(accountsData);
+      const response = await fetch('/api/plaid/get_accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setAccounts(data.accounts);
+      } else {
+        throw new Error(data.error || 'Failed to fetch accounts');
+      }
     } catch (error) {
       console.error('Error fetching accounts data:', error);
       toast.error('Failed to fetch accounts. Please try again.');
@@ -70,14 +75,6 @@ export default function AccountsPage() {
     generateToken();
     fetchAccountsData();
   }, [generateToken, fetchAccountsData]);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Current session:', session);
-    };
-    checkAuth();
-  }, []);
 
   const onSuccess = useCallback(async (public_token: string) => {
     try {
@@ -96,13 +93,14 @@ export default function AccountsPage() {
         toast.success('Account linked successfully');
         fetchAccountsData();
       } else {
-        console.error('Error response:', data);
         throw new Error(data.error || 'Failed to link account');
       }
     } catch (error) {
       console.error('Error exchanging public token:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack);
+      }
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error details:', errorMessage);
       toast.error(`Failed to link account: ${errorMessage}`);
     }
   }, [fetchAccountsData]);
@@ -141,24 +139,26 @@ export default function AccountsPage() {
       </div>
       <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:px-6 py-5">
-          {plaidItems.map((item) => (
-            <div key={item.id} className="bg-white p-4 rounded-lg shadow">
-              <h2 className="text-lg font-semibold text-gray-900">Linked Institution</h2>
-              <p className="text-gray-600">Item ID: {item.item_id}</p>
-            </div>
-          ))}
           {accounts.map((account) => (
-            <div key={account.id} className="bg-white p-4 rounded-lg shadow">
+            <div key={account.account_id} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-lg font-semibold text-gray-900">{account.name}</h2>
                 <CreditCard className="h-6 w-6 text-gray-400" />
               </div>
-              <p className="text-gray-600">{account.type}</p>
-              <p className="text-xl font-bold mt-2 text-gray-900">${account.balance.toFixed(2)}</p>
+              <p className="text-gray-600">{account.type} - {account.subtype}</p>
+              <p className="text-sm text-gray-500">Account ending in: {account.mask}</p>
+              <p className="text-xl font-bold mt-2 text-gray-900">
+                ${account.balances.current.toFixed(2)}
+              </p>
+              {account.balances.available && (
+                <p className="text-sm text-gray-500">
+                  Available: ${account.balances.available.toFixed(2)}
+                </p>
+              )}
             </div>
           ))}
         </div>
-        {plaidItems.length === 0 && accounts.length === 0 && (
+        {accounts.length === 0 && (
           <div className="text-center py-5 sm:px-6">
             <p className="text-gray-500">
               No accounts linked yet. Click "Link New Account" to get started.

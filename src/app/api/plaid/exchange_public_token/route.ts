@@ -20,7 +20,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Access token obtained and saved successfully' });
   } catch (error) {
     console.error('Error in exchange_public_token route:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      console.error('Error stack:', error.stack);
+    }
     return NextResponse.json({ error: 'Failed to exchange token', details: errorMessage }, { status: 500 });
   }
 }
