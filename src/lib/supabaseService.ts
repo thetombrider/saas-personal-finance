@@ -1,16 +1,25 @@
 import { supabase } from '@/lib/supabaseClient'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Function to get user
 export const getUser = async () => {
-  console.log('getUser function called');
-  const { data: { user }, error } = await supabase.auth.getUser();
-  console.log('Supabase auth response:', { user, error });
-  if (error) {
-    console.error('Error fetching user:', error.message);
-    throw new Error('User not authenticated');
+  const supabase = createClientComponentClient();
+  
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    
+    if (session && session.user) {
+      return session.user;
+    } else {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      return user;
+    }
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return null;
   }
-  console.log('User fetched:', user);
-  return user;
 }
 
 // Function to fetch accounts

@@ -4,17 +4,15 @@ import { getUser } from '@/lib/supabaseService';
 
 export async function POST(req: Request) {
   try {
-    const { public_token } = await req.json();
+    const { public_token, userId } = await req.json();
     console.log('Received public token:', public_token);
+    console.log('Received user ID:', userId);
 
-    const user = await getUser();
-    console.log('User:', user);
-    
-    if (!user) {
-      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const result = await exchangePublicToken(public_token, user.id);
+    const result = await exchangePublicToken(public_token, userId);
     console.log('Exchange result:', result);
 
     return NextResponse.json({ message: 'Access token obtained and saved successfully' });
