@@ -52,9 +52,10 @@ export default function AccountsPage() {
       }
       
       const data = await response.json();
+      console.log('Received data from create_link_token:', data);
       if (!data.link_token) throw new Error('Link token not received');
       
-      console.log('Link token generated successfully');
+      console.log('Link token generated successfully:', data.link_token);
       setLinkToken(data.link_token);
     } catch (error) {
       console.error('Error generating link token:', error);
@@ -99,9 +100,13 @@ export default function AccountsPage() {
   }, [router]);
 
   useEffect(() => {
-    if (user && !linkToken) {
-      generateToken();
-    }
+    const initializeLinkToken = async () => {
+      if (user && !linkToken) {
+        console.log('Initializing link token');
+        await generateToken();
+      }
+    };
+    initializeLinkToken();
   }, [user, linkToken, generateToken]);
 
   useEffect(() => {
@@ -180,7 +185,18 @@ export default function AccountsPage() {
         <h1 className="text-2xl font-bold text-gray-900">Your Accounts</h1>
         <div className="mt-4">
           <Button 
-            onClick={() => open()} 
+            onClick={() => {
+              console.log('Link button clicked');
+              console.log('Ready:', ready);
+              console.log('Is loading:', isLoading);
+              console.log('Link token:', linkToken);
+              console.log('User:', user);
+              if (ready && !isLoading && linkToken && user) {
+                open();
+              } else {
+                console.log('Button click conditions not met');
+              }
+            }} 
             disabled={!ready || isLoading || !linkToken || !user}
             variant="outline" 
             className="mr-2"
