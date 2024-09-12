@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabaseClient'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 // Function to get user
 export const getUser = async () => {
-  const supabase = createClientComponentClient();
+  const supabase = createServerComponentClient({ cookies });
   
   try {
     console.log('Fetching user session...');

@@ -8,8 +8,9 @@ export async function POST(req: Request) {
     console.log('Received public token:', public_token);
     console.log('Received user ID:', userId);
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    const user = await getUser();
+    if (!user || user.id !== userId) {
+      return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
     const result = await exchangePublicToken(public_token, userId);

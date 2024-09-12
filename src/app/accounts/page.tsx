@@ -138,7 +138,6 @@ export default function AccountsPage() {
 
   const onSuccess = useCallback(async (public_token: string) => {
     try {
-      const user = await getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -163,7 +162,7 @@ export default function AccountsPage() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Failed to link account: ${errorMessage}`);
     }
-  }, [fetchAccountsData]);
+  }, [user, fetchAccountsData]);
 
   const onExit = useCallback((err: any) => {
     if (err != null) {
