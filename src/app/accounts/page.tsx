@@ -8,6 +8,7 @@ import { getUser, fetchAccounts } from '@/lib/supabaseService'
 import { createLinkToken, exchangePublicToken } from '@/lib/plaidService'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { User } from '@supabase/supabase-js'
 
 // Placeholder type for account data
 type Account = {
@@ -26,17 +27,15 @@ export default function AccountsPage() {
   const [linkToken, setLinkToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
 
   const generateToken = useCallback(async () => {
-    if (linkToken) return; // Don't generate a new token if one already exists
+    if (linkToken) return;
     setIsLoading(true);
     try {
-      const user = await getUser();
       if (!user) {
-        toast.error('Please log in to link your account.');
-        router.push('/auth');
-        return;
+        throw new Error('User not authenticated');
       }
       
       console.log('Fetching link token for user:', user.id);
@@ -63,17 +62,11 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router, linkToken]);
+  }, [user, linkToken]);
 
   const fetchAccountsData = useCallback(async () => {
+    if (!user) return;
     try {
-      const user = await getUser();
-      if (!user) {
-        toast.error('Please log in to view your accounts.');
-        router.push('/auth');
-        return;
-      }
-
       console.log('Fetching accounts for user:', user.id);
       const response = await fetch('/api/plaid/get_accounts', {
         method: 'POST',
@@ -82,9 +75,7 @@ export default function AccountsPage() {
       });
       const data = await response.json();
       if (response.ok) {
-        if (JSON.stringify(data.accounts) !== JSON.stringify(accounts)) {
-          setAccounts(data.accounts);
-        }
+        setAccounts(data.accounts);
       } else {
         throw new Error(data.error || 'Failed to fetch accounts');
       }
@@ -92,24 +83,31 @@ export default function AccountsPage() {
       console.error('Error fetching accounts data:', error);
       toast.error('Failed to fetch accounts. Please try again.');
     }
-  }, [router, accounts]);
+  }, [user]);
 
   useEffect(() => {
-    const initializeAccountsPage = async () => {
-      const user = await getUser();
-      if (user) {
-        console.log('User found, initializing accounts page');
-        if (!linkToken) {
-          await generateToken();
-        }
-        await fetchAccountsData();
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
       } else {
-        console.log('User not found, redirecting to auth page');
         router.push('/auth');
       }
     };
-    initializeAccountsPage();
-  }, []);
+    checkAuth();
+  }, [router]);
+
+  useEffect(() => {
+    if (user && !linkToken) {
+      generateToken();
+    }
+  }, [user, linkToken, generateToken]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAccountsData();
+    }
+  }, [user, fetchAccountsData]);
 
   const config: PlaidLinkOptions = {
     token: linkToken!,
@@ -182,7 +180,7 @@ export default function AccountsPage() {
         <div className="mt-4">
           <Button 
             onClick={() => open()} 
-            disabled={!ready || isLoading || !linkToken}
+            disabled={!ready || isLoading || !linkToken || !user}
             variant="outline" 
             className="mr-2"
           >
