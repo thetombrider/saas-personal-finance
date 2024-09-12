@@ -46,13 +46,13 @@ export default function AccountsPage() {
         body: JSON.stringify({ userId: user.id }),
       });
       
+      const data = await response.json();
+      console.log('Response from create_link_token:', data);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to create link token: ${errorData.error}`);
+        throw new Error(`Failed to create link token: ${data.error}`);
       }
       
-      const data = await response.json();
-      console.log('Received data from create_link_token:', data);
       if (!data.link_token) throw new Error('Link token not received');
       
       console.log('Link token generated successfully:', data.link_token);
@@ -76,6 +76,7 @@ export default function AccountsPage() {
         body: JSON.stringify({ userId: user.id }),
       });
       const data = await response.json();
+      console.log('Response from get_accounts:', data);
       if (response.ok) {
         setAccounts(data.accounts);
       } else {
@@ -83,7 +84,7 @@ export default function AccountsPage() {
       }
     } catch (error) {
       console.error('Error fetching accounts data:', error);
-      toast.error('Failed to fetch accounts. Please try again.');
+      toast.error(`Failed to fetch accounts: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }, [user]);
 

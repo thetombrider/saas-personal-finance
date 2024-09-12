@@ -22,7 +22,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ link_token: linkToken.link_token });
   } catch (error) {
-    console.error('Error creating link token:', error);
-    return NextResponse.json({ error: 'Failed to create link token' }, { status: 500 });
+    console.error('Error in create_link_token route:', error);
+    let errorMessage = 'Failed to create link token';
+    if (error instanceof Error) {
+      errorMessage += `: ${error.message}`;
+      console.error('Error stack:', error.stack);
+    }
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
