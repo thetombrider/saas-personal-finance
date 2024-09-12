@@ -34,16 +34,14 @@ export default function AccountsPage() {
     if (linkToken) return;
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-      
-      console.log('Fetching link token for user:', user.id);
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/plaid/create_link_token', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({ userId: user?.id }),
       });
       
       const data = await response.json();
@@ -64,15 +62,19 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [linkToken]);
+  }, [linkToken, user]);
 
   const fetchAccountsData = useCallback(async () => {
     if (!user) return;
     try {
       console.log('Fetching accounts for user:', user.id);
+      const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch('/api/plaid/get_accounts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({ userId: user.id }),
       });
       const data = await response.json();

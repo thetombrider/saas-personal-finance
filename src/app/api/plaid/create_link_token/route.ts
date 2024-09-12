@@ -5,19 +5,17 @@ import { cookies } from 'next/headers'
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await req.json();
-    console.log('Received request to create link token for user:', userId);
-
     const supabase = createServerComponentClient({ cookies });
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
 
-    if (!user || user.id !== userId) {
-      console.log('User authentication failed');
+    if (!session) {
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
-    console.log('Creating link token for authenticated user:', user.id);
-    const linkToken = await createLinkToken(user.id);
+    const { userId } = await req.json();
+    console.log('Creating link token for authenticated user:', userId);
+
+    const linkToken = await createLinkToken(userId);
     console.log('Link token created successfully:', linkToken.link_token);
 
     return NextResponse.json({ link_token: linkToken.link_token });
