@@ -49,10 +49,6 @@ export const exchangePublicToken = async (publicToken: string, userId: string) =
     });
     console.log('Public token exchanged:', response.data);
     
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-    
     await saveAccessToken(userId, response.data.access_token, response.data.item_id);
     
     return response;

@@ -34,6 +34,7 @@ export default function AccountsPage() {
     if (linkToken) return;
     setIsLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -62,7 +63,7 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, linkToken]);
+  }, [linkToken]);
 
   const fetchAccountsData = useCallback(async () => {
     if (!user) return;
@@ -138,6 +139,7 @@ export default function AccountsPage() {
 
   const onSuccess = useCallback(async (public_token: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -162,7 +164,7 @@ export default function AccountsPage() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Failed to link account: ${errorMessage}`);
     }
-  }, [user, fetchAccountsData]);
+  }, [fetchAccountsData]);
 
   const onExit = useCallback((err: any) => {
     if (err != null) {

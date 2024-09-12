@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { exchangePublicToken } from '@/lib/plaidService';
-import { getUser } from '@/lib/supabaseService';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
@@ -8,12 +9,14 @@ export async function POST(req: Request) {
     console.log('Received public token:', public_token);
     console.log('Received user ID:', userId);
 
-    const user = await getUser();
+    const supabase = createServerComponentClient({ cookies });
+    const { data: { user } } = await supabase.auth.getUser();
+
     if (!user || user.id !== userId) {
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
-    const result = await exchangePublicToken(public_token, userId);
+    const result = await exchangePublicToken(public_token, user.id);
     console.log('Exchange result:', result);
 
     return NextResponse.json({ message: 'Access token obtained and saved successfully' });
