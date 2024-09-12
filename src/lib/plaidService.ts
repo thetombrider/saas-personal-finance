@@ -14,7 +14,7 @@ const configuration = new Configuration({
 // Remove any custom User-Agent setting
 delete configuration.baseOptions?.headers?.['User-Agent'];
 
-const plaidClient = new PlaidApi(configuration);
+export const plaidClient = new PlaidApi(configuration);
 
 // Function to create link token
 export const createLinkToken = async (userId: string) => {
