@@ -67,7 +67,11 @@ export default function AccountsPage() {
   const fetchAccountsData = useCallback(async () => {
     try {
       const user = await getUser();
-      if (!user) throw new Error('User not found');
+      if (!user) {
+        toast.error('Please log in to view your accounts.');
+        router.push('/auth');
+        return;
+      }
 
       console.log('Fetching accounts for user:', user.id);
       const response = await fetch('/api/plaid/get_accounts', {
@@ -85,12 +89,20 @@ export default function AccountsPage() {
       console.error('Error fetching accounts data:', error);
       toast.error('Failed to fetch accounts. Please try again.');
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
-    generateToken();
-    fetchAccountsData();
-  }, [generateToken, fetchAccountsData]);
+    const initializeAccountsPage = async () => {
+      const user = await getUser();
+      if (user) {
+        generateToken();
+        fetchAccountsData();
+      } else {
+        router.push('/auth');
+      }
+    };
+    initializeAccountsPage();
+  }, [generateToken, fetchAccountsData, router]);
 
   const config: PlaidLinkOptions = {
     token: linkToken!,
