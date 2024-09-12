@@ -29,6 +29,7 @@ export default function AccountsPage() {
   const router = useRouter()
 
   const generateToken = useCallback(async () => {
+    if (linkToken) return; // Don't generate a new token if one already exists
     setIsLoading(true);
     try {
       const user = await getUser();
@@ -62,7 +63,7 @@ export default function AccountsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router])
+  }, [router, linkToken]);
 
   const fetchAccountsData = useCallback(async () => {
     try {
@@ -81,7 +82,9 @@ export default function AccountsPage() {
       });
       const data = await response.json();
       if (response.ok) {
-        setAccounts(data.accounts);
+        if (JSON.stringify(data.accounts) !== JSON.stringify(accounts)) {
+          setAccounts(data.accounts);
+        }
       } else {
         throw new Error(data.error || 'Failed to fetch accounts');
       }
@@ -89,21 +92,23 @@ export default function AccountsPage() {
       console.error('Error fetching accounts data:', error);
       toast.error('Failed to fetch accounts. Please try again.');
     }
-  }, [router])
+  }, [router, accounts]);
 
   useEffect(() => {
     const initializeAccountsPage = async () => {
       const user = await getUser();
       if (user) {
-        generateToken();
-        fetchAccountsData();
+        if (!linkToken) {
+          await generateToken();
+        }
+        await fetchAccountsData();
       } else {
         console.log('User not found, redirecting to auth page');
         router.push('/auth');
       }
     };
     initializeAccountsPage();
-  }, [generateToken, fetchAccountsData, router]);
+  }, [generateToken, fetchAccountsData, router, linkToken]);
 
   const config: PlaidLinkOptions = {
     token: linkToken!,
