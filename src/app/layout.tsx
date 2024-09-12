@@ -16,16 +16,21 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className="h-full bg-gray-100">
-      <body className={`h-full ${inter.className}`}>
+    <html lang="en" className="h-full bg-white">
+      <body className={`h-full flex flex-col ${inter.className}`}>
         <Navbar />
-        <div className="min-h-full">
+        <div className="flex-grow pt-16">
           <main>
             <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
               {children}
             </div>
           </main>
         </div>
+        <footer className="bg-white border-t">
+          <div className="mx-auto max-w-7xl py-4 px-4 sm:px-6 lg:px-8">
+            <p className="text-center text-sm text-gray-500">© 2023 Personal Finance App. All rights reserved.</p>
+          </div>
+        </footer>
         <Toaster position="bottom-right" />
       </body>
     </html>
