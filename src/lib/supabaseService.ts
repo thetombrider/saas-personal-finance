@@ -10,8 +10,10 @@ export const getUser = async () => {
     if (error) throw error;
     
     if (session && session.user) {
+      console.log('User session found:', session.user.id);
       return session.user;
     } else {
+      console.log('No active user session found');
       return null;
     }
   } catch (error) {

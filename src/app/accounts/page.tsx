@@ -98,6 +98,7 @@ export default function AccountsPage() {
         generateToken();
         fetchAccountsData();
       } else {
+        console.log('User not found, redirecting to auth page');
         router.push('/auth');
       }
     };
