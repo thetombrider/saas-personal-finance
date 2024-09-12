@@ -1,10 +1,10 @@
 'use client'
 import { useState, useCallback, useEffect } from 'react'
-import { usePlaidLink } from 'react-plaid-link'
+import { usePlaidLink, PlaidLinkOptions } from 'react-plaid-link'
 import { Button } from "@/components/ui/button"
 import { PlusCircle, CreditCard } from "lucide-react"
 import { toast } from 'react-hot-toast'
-import { getUser, fetchAccounts, fetchPlaidItems } from '@/lib/supabaseService'
+import { getUser, fetchAccounts } from '@/lib/supabaseService'
 import { createLinkToken, exchangePublicToken } from '@/lib/plaidService'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -37,9 +37,16 @@ export default function AccountsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id }),
       });
-      const data = await response.json();
       
-      if (!data.link_token) throw new Error('Link token not generated');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create link token');
+      }
+      
+      const data = await response.json();
+      if (!data.link_token) throw new Error('Link token not received');
+      
+      console.log('Link token generated:', data.link_token);
       setLinkToken(data.link_token);
     } catch (error) {
       console.error('Error generating link token:', error);
@@ -75,6 +82,33 @@ export default function AccountsPage() {
     generateToken();
     fetchAccountsData();
   }, [generateToken, fetchAccountsData]);
+
+  const config: PlaidLinkOptions = {
+    token: linkToken!,
+    onSuccess: async (public_token, metadata) => {
+      console.log('Link success, public token:', public_token);
+      await onSuccess(public_token);
+    },
+    onExit: (err, metadata) => {
+      console.log('Link exit:', err, metadata);
+      if (err != null) {
+        console.error('Plaid Link error:', err);
+        toast.error('An error occurred while linking your account.');
+      }
+    },
+    onEvent: (eventName, metadata) => {
+      console.log('Link event:', eventName, metadata);
+    },
+  };
+
+  const { open, ready, error } = usePlaidLink(config);
+
+  useEffect(() => {
+    if (error) {
+      console.error('Plaid Link error:', error);
+      toast.error(`Error initializing Plaid Link: ${error.message}`);
+    }
+  }, [error]);
 
   const onSuccess = useCallback(async (public_token: string) => {
     try {
@@ -113,14 +147,6 @@ export default function AccountsPage() {
     // Handle user exit
   }, [])
 
-  const config = {
-    token: linkToken,
-    onSuccess,
-    onExit,
-  }
-
-  const { open, ready } = usePlaidLink(config)
-
   return (
     <div className="bg-white shadow-sm rounded-lg">
       <div className="px-4 py-5 sm:px-6">
@@ -128,7 +154,7 @@ export default function AccountsPage() {
         <div className="mt-4">
           <Button 
             onClick={() => open()} 
-            disabled={!ready || isLoading}
+            disabled={!ready || isLoading || !linkToken}
             variant="outline" 
             className="mr-2"
           >
