@@ -5,13 +5,19 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
+    console.log('Entering get_accounts route');
     const supabase = createServerComponentClient({ cookies });
-    const { data: { session } } = await supabase.auth.getSession();
+    console.log('Supabase client created');
+    const { data, error: sessionError } = await supabase.auth.getSession();
+    console.log('Session data:', data);
+    console.log('Session error:', sessionError);
 
-    if (!session) {
+    if (!data.session) {
+      console.log('No session found');
       return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
 
+    console.log('User authenticated, proceeding with request');
     const { userId } = await request.json();
     console.log('Fetching Plaid items for user:', userId);
 
