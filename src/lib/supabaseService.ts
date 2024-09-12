@@ -6,6 +6,7 @@ export const getUser = async () => {
   const supabase = createClientComponentClient();
   
   try {
+    console.log('Fetching user session...');
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) throw error;
     

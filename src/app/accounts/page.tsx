@@ -98,6 +98,7 @@ export default function AccountsPage() {
     const initializeAccountsPage = async () => {
       const user = await getUser();
       if (user) {
+        console.log('User found, initializing accounts page');
         if (!linkToken) {
           await generateToken();
         }
@@ -108,7 +109,7 @@ export default function AccountsPage() {
       }
     };
     initializeAccountsPage();
-  }, [generateToken, fetchAccountsData, router, linkToken]);
+  }, []);
 
   const config: PlaidLinkOptions = {
     token: linkToken!,
