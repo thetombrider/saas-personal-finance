@@ -5,7 +5,11 @@ import { supabase } from '@/lib/supabaseClient';
 export async function POST(request: Request) {
   try {
     const { userId } = await request.json();
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
 
+    console.log('Fetching Plaid items for user:', userId);
     const { data: plaidItems, error } = await supabase
       .from('plaid_items')
       .select('access_token')
@@ -13,9 +17,14 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
+    if (!plaidItems || plaidItems.length === 0) {
+      return NextResponse.json({ accounts: [] });
+    }
+
     const allAccounts = [];
 
     for (const item of plaidItems) {
+      console.log('Fetching accounts for access token:', item.access_token);
       const response = await plaidClient.accountsGet({
         access_token: item.access_token,
       });
@@ -23,9 +32,10 @@ export async function POST(request: Request) {
       allAccounts.push(...response.data.accounts);
     }
 
+    console.log('All accounts fetched:', allAccounts.length);
     return NextResponse.json({ accounts: allAccounts });
   } catch (error) {
     console.error('Error fetching accounts:', error);
-    return NextResponse.json({ error: 'Failed to fetch accounts' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch accounts', details: (error as Error).message }, { status: 500 });
   }
 }

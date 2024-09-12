@@ -32,6 +32,7 @@ export default function AccountsPage() {
       const user = await getUser();
       if (!user) throw new Error('User not found');
       
+      console.log('Fetching link token for user:', user.id);
       const response = await fetch('/api/plaid/create_link_token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,17 +41,18 @@ export default function AccountsPage() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create link token');
+        throw new Error(`Failed to create link token: ${errorData.error}`);
       }
       
       const data = await response.json();
       if (!data.link_token) throw new Error('Link token not received');
       
-      console.log('Link token generated:', data.link_token);
+      console.log('Link token generated successfully');
       setLinkToken(data.link_token);
     } catch (error) {
       console.error('Error generating link token:', error);
-      toast.error('Failed to initialize Plaid Link. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to initialize Plaid Link: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +63,7 @@ export default function AccountsPage() {
       const user = await getUser();
       if (!user) throw new Error('User not found');
 
+      console.log('Fetching accounts for user:', user.id);
       const response = await fetch('/api/plaid/get_accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

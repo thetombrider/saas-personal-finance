@@ -28,9 +28,14 @@ export const createLinkToken = async (userId: string) => {
       language: 'en',
     });
     console.log('Link token created:', response.data.link_token);
-    return response;
+    return response.data;
   } catch (error) {
     console.error('Error creating link token:', error);
+    if (error instanceof Error && 'response' in error && 
+        typeof error.response === 'object' && error.response !== null && 
+        'data' in error.response) {
+      console.error('Plaid API error:', error.response.data);
+    }
     throw error;
   }
 };
